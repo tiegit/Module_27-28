@@ -2,19 +2,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Wallet : IWalletData, IDisposable
+public class Wallet : IWalletDataChangeSender, IDisposable
 {
     public event Action WalletDataChanged;
 
     private List<Currency> _currencies = new List<Currency>();
 
     private Game _game;
-    private readonly InputButtonsHandler _inputButtonsHandler;
+    private InputButtonsHandler _inputButtonsHandler;
 
     public Wallet(Game game, InputButtonsHandler inputButtonsHandler)
     {
         _game = game;
         _inputButtonsHandler = inputButtonsHandler;
+
         _game.AddCurrency += OnAddCurrency;
         _game.RemoveCurrency += OnRemoveCurrency;
         _game.Clear += OnClear;
@@ -22,8 +23,6 @@ public class Wallet : IWalletData, IDisposable
         _inputButtonsHandler.AddCurrency += OnAddCurrency;
         _inputButtonsHandler.RemoveCurrency += OnRemoveCurrency;
     }
-
-    public IReadOnlyList<Currency> Currencies => _currencies;
 
     public List<Currency> GetCurrencyBy(Func<Currency, bool> itemFilter)
     {

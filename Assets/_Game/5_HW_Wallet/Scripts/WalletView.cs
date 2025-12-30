@@ -7,10 +7,10 @@ public class WalletView : MonoBehaviour
     [SerializeField] private WalletItemView _walletItemPrefab;
     [SerializeField] private List<WalletItemViewDTO> _walletItems;
 
-    private Wallet _wallet;
+    private IWalletDataChangeSender _wallet;
     private Dictionary<WalletItemType, WalletItemView> _itemsViews = new Dictionary<WalletItemType, WalletItemView>();
 
-    public void Initialize(Wallet wallet)
+    public void Initialize(IWalletDataChangeSender wallet)
     {
         _wallet = wallet;
         _wallet.WalletDataChanged += OnWalletDataChanged;
