@@ -8,4 +8,6 @@ public class PlayerInput
     public bool A4KeyPressed => Input.GetKeyDown(KeyCode.Alpha4);
     public bool A5KeyPressed => Input.GetKeyDown(KeyCode.Alpha5);
     public bool A6KeyPressed => Input.GetKeyDown(KeyCode.Alpha6);
+
+    public bool CKeyPressed => Input.GetKeyDown(KeyCode.C);
 }

@@ -4,6 +4,7 @@ public class Game
 {
     public event Action<WalletItemType, int> AddCurrency;
     public event Action<WalletItemType, int> RemoveCurrency;
+    public event Action Clear;
 
     private PlayerInput _playerInput;
 
@@ -28,5 +29,8 @@ public class Game
 
         if (_playerInput.A6KeyPressed)
             RemoveCurrency?.Invoke(WalletItemType.Energy, 1);
+
+        if (_playerInput.CKeyPressed)
+            Clear?.Invoke();
     }
 }

@@ -21,17 +21,37 @@ public class WalletView : MonoBehaviour
         _itemsViews.Clear();
     }
 
-    private void OnWalletDataChanged() => SyncItems();
-
-    private void SyncItems()
+    private void OnWalletDataChanged()
     {
-        RemoveInactiveViews();
+        List<Currency> activeCurrencies = _wallet.GetCurrencyBy(currency => currency.Amount > 0);
 
-        foreach (var data in _wallet.Currencies)
+        List<WalletItemType> keysToRemove = new List<WalletItemType>();
+
+        foreach (var type in _itemsViews.Keys)
         {
-            if (data.Amount <= 0)
-                continue;
+            bool isActive = false;
 
+            foreach (var currency in activeCurrencies)
+            {
+                if (type == currency.ItemType)
+                {
+                    isActive = true;
+                    break;
+                }
+            }
+
+            if (!isActive)
+                keysToRemove.Add(type);
+        }
+
+        foreach (var key in keysToRemove)
+        {
+            Destroy(_itemsViews[key].gameObject);
+            _itemsViews.Remove(key);
+        }
+
+        foreach (var data in activeCurrencies)
+        {
             if (_itemsViews.ContainsKey(data.ItemType))
             {
                 _itemsViews[data.ItemType].SetValue(data.Amount);
@@ -44,6 +64,7 @@ public class WalletView : MonoBehaviour
                     {
                         WalletItemView view = Instantiate(_walletItemPrefab, _walletViewInner);
                         view.Setup(item.Sprite, data.Amount);
+
                         _itemsViews[data.ItemType] = view;
 
                         break;
@@ -51,34 +72,6 @@ public class WalletView : MonoBehaviour
                 }
             }
         }
-    }
-
-    private void RemoveInactiveViews()
-    {
-        var keysToRemove = new List<WalletItemType>();
-
-        foreach (var type in _itemsViews.Keys)
-        {
-            bool isActive = false;
-
-            foreach (var currency in _wallet.Currencies)
-            {
-                if (currency.ItemType == type && currency.Amount > 0)
-                {
-                    isActive = true;
-                    break;
-                }
-            }
-
-            if (!isActive)
-            {
-                Destroy(_itemsViews[type].gameObject);
-                keysToRemove.Add(type);
-            }
-        }
-
-        foreach (var type in keysToRemove)
-            _itemsViews.Remove(type);
     }
 
     private void OnDestroy()

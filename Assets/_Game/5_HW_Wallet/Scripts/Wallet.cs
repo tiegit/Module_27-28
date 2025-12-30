@@ -17,6 +17,7 @@ public class Wallet : IWalletData, IDisposable
         _inputButtonsHandler = inputButtonsHandler;
         _game.AddCurrency += OnAddCurrency;
         _game.RemoveCurrency += OnRemoveCurrency;
+        _game.Clear += OnClear;
 
         _inputButtonsHandler.AddCurrency += OnAddCurrency;
         _inputButtonsHandler.RemoveCurrency += OnRemoveCurrency;
@@ -24,26 +25,29 @@ public class Wallet : IWalletData, IDisposable
 
     public IReadOnlyList<Currency> Currencies => _currencies;
 
+    public List<Currency> GetCurrencyBy(Func<Currency, bool> itemFilter)
+    {
+        List<Currency> selectedCurrency = new List<Currency>();
+
+        foreach (Currency item in _currencies)
+        {
+            if (itemFilter != null && itemFilter.Invoke(item))
+                selectedCurrency.Add(item);
+        }
+
+        return selectedCurrency;
+    }
+
     private void OnAddCurrency(WalletItemType walletItemType, int value)
     {
         if (value <= 0)
             return;
 
-        bool found = false;
+        var currencies = GetCurrencyBy(c => c.ItemType == walletItemType);
 
-        for (int i = 0; i < _currencies.Count; i++)
-        {
-            if (_currencies[i].ItemType == walletItemType)
-            {
-                _currencies[i].AddAmount(value);
-
-                found = true;
-
-                break;
-            }
-        }
-
-        if (!found)
+        if (currencies.Count > 0)
+            currencies[0].AddAmount(value);
+        else
             _currencies.Add(new Currency(walletItemType, value));
 
         InvokeWalletAction(walletItemType);
@@ -54,23 +58,21 @@ public class Wallet : IWalletData, IDisposable
         if (value <= 0)
             return;
 
-        for (int i = 0; i < _currencies.Count; i++)
+        var currencies = GetCurrencyBy(currency => currency.ItemType == walletItemType);
+
+        if (currencies.Count > 0)
         {
-            if (_currencies[i].ItemType == walletItemType)
-            {
-                _currencies[i].RemoveAmount(value);
+            Currency currency = currencies[0];
+            currency.RemoveAmount(value);
 
-                if (_currencies[i].Amount <= 0)
-                    _currencies[i].Clear();
+            if (currency.Amount <= 0)
+                currency.Clear();
 
-                InvokeWalletAction(walletItemType);
-
-                break;
-            }
+            InvokeWalletAction(walletItemType);
         }
     }
 
-    private void Clear()
+    private void OnClear()
     {
         _currencies.Clear();
 
@@ -85,15 +87,10 @@ public class Wallet : IWalletData, IDisposable
 
         int currentAmount = 0;
 
-        foreach (var currency in _currencies)
-        {
-            if (currency.ItemType == walletItemType)
-            {
-                currentAmount = currency.Amount;
+        var currencies = GetCurrencyBy(currency => currency.ItemType == walletItemType);
 
-                break;
-            }
-        }
+        if (currencies.Count > 0)
+            currentAmount = currencies[0].Amount;
 
         Debug.Log($"Изменилось количество - {walletItemType} : {currentAmount}");
     }
