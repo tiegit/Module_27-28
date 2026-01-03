@@ -4,16 +4,19 @@ public class WalletBootstrap : MonoBehaviour
 {
     [SerializeField] private WalletView _walletView;
     [SerializeField] private InputButtonsHandler _inputButtonsHandler;
+
     private Wallet _wallet;
-    private Game _game;
+    private InputHandler _inputHandler;
+    private CombinedInputHandler _combinedInputHandler;
 
     private void Awake()
     {
         PlayerInput playerInput = new PlayerInput();
+        _inputHandler = new InputHandler(playerInput);
 
-        _game = new Game(playerInput);
+        _combinedInputHandler = new CombinedInputHandler(_inputHandler, _inputButtonsHandler);
 
-        _wallet = new Wallet(_game, _inputButtonsHandler);
+        _wallet = new Wallet(_combinedInputHandler);
 
         if (_walletView != null)
             _walletView.Initialize(_wallet);
@@ -21,11 +24,12 @@ public class WalletBootstrap : MonoBehaviour
 
     private void Update()
     {
-        _game.CustomUpdate();
+        _inputHandler.CustomUpdate();
     }
 
     private void OnDestroy()
     {
         _wallet.Dispose();
+        _combinedInputHandler.Dispose();
     }
 }

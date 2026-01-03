@@ -14,8 +14,6 @@ public class InputButtonsHandler : MonoBehaviour
     [SerializeField] private Button _energyAddButton;
     [SerializeField] private Button _energyRemoveButton;
 
-    private Wallet _wallet;
-
     private void OnEnable()
     {
         _coinAddButton.onClick.AddListener(() => AddCurrencyRequest(WalletItemType.Coin, 1));

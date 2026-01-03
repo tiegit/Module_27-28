@@ -29,16 +29,7 @@ public class WalletView : MonoBehaviour
 
         foreach (var type in _itemsViews.Keys)
         {
-            bool isActive = false;
-
-            foreach (var currency in activeCurrencies)
-            {
-                if (type == currency.ItemType)
-                {
-                    isActive = true;
-                    break;
-                }
-            }
+            bool isActive = activeCurrencies.Exists(currency => type == currency.ItemType);
 
             if (!isActive)
                 keysToRemove.Add(type);
@@ -62,10 +53,10 @@ public class WalletView : MonoBehaviour
                 {
                     if (item.ItemType == data.ItemType)
                     {
-                        WalletItemView view = Instantiate(_walletItemPrefab, _walletViewInner);
-                        view.Setup(item.Sprite, data.Amount);
+                        WalletItemView itemView = Instantiate(_walletItemPrefab, _walletViewInner);
+                        itemView.Setup(item.Sprite, data.Amount);
 
-                        _itemsViews[data.ItemType] = view;
+                        _itemsViews[data.ItemType] = itemView;
 
                         break;
                     }

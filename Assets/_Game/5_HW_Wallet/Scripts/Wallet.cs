@@ -7,23 +7,16 @@ public class Wallet : IWalletDataChangeSender, IDisposable
     public event Action WalletDataChanged;
 
     private List<Currency> _currencies = new List<Currency>();
+    private IInputHandler _inputHandler;
 
-    private Game _game;
-    private InputButtonsHandler _inputButtonsHandler;
-
-    public Wallet(Game game, InputButtonsHandler inputButtonsHandler)
+    public Wallet(IInputHandler inputHandler)
     {
-        _game = game;
-        _inputButtonsHandler = inputButtonsHandler;
+        _inputHandler = inputHandler;
 
-        _game.AddCurrency += OnAddCurrency;
-        _game.RemoveCurrency += OnRemoveCurrency;
-        _game.Clear += OnClear;
-
-        _inputButtonsHandler.AddCurrency += OnAddCurrency;
-        _inputButtonsHandler.RemoveCurrency += OnRemoveCurrency;
+        _inputHandler.AddCurrency += OnAddCurrency;
+        _inputHandler.RemoveCurrency += OnRemoveCurrency;
+        _inputHandler.Clear += OnClear;
     }
-
     public List<Currency> GetCurrencyBy(Func<Currency, bool> itemFilter)
     {
         List<Currency> selectedCurrency = new List<Currency>();
@@ -96,10 +89,8 @@ public class Wallet : IWalletDataChangeSender, IDisposable
 
     public void Dispose()
     {
-        _game.AddCurrency -= OnAddCurrency;
-        _game.RemoveCurrency -= OnRemoveCurrency;
-
-        _inputButtonsHandler.AddCurrency -= OnAddCurrency;
-        _inputButtonsHandler.RemoveCurrency -= OnRemoveCurrency;
+        _inputHandler.AddCurrency -= OnAddCurrency;
+        _inputHandler.RemoveCurrency -= OnRemoveCurrency;
+        _inputHandler.Clear -= OnClear;
     }
 }

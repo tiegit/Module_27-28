@@ -1,6 +1,6 @@
 ﻿using System;
 
-public class Game
+public class InputHandler
 {
     public event Action<WalletItemType, int> AddCurrency;
     public event Action<WalletItemType, int> RemoveCurrency;
@@ -8,7 +8,7 @@ public class Game
 
     private PlayerInput _playerInput;
 
-    public Game(PlayerInput playerInput) => _playerInput = playerInput;
+    public InputHandler(PlayerInput playerInput) => _playerInput = playerInput;
 
     public void CustomUpdate()
     {
