@@ -22,7 +22,6 @@ public class Timer
     public float InitialTime => _initialTime;
     public float ElapsedTime => _elapsedTime;
     public bool IsPaused => _isPaused;
-    public bool IsRunning => timerCoroutine != null && !_isPaused;
 
     public void SetTimerValue(float seconds)
     {
