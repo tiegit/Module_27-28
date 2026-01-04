@@ -3,35 +3,23 @@ using System.Text;
 using UnityEngine;
 using TMPro;
 
-public class EnemyStatsView : MonoBehaviour
+public class EnemiesStatsView : MonoBehaviour
 {
     [SerializeField] private TMP_Text _statsText;
 
     private EnemyService _service;
 
-    public void Initialize(EnemyService service) => _service = service;
-
-    private void OnEnable()
+    public void Initialize(EnemyService service)
     {
-        if (_service != null)
-        {
-            _service.OnEnemiesChanged += RefreshUI;
+        _service = service;
 
-            RefreshUI();
-        }
+        _service.OnEnemiesChanged += UpdateUI;
+
+        UpdateUI();
     }
 
-    private void OnDisable()
+    private void UpdateUI()
     {
-        if (_service != null)
-            _service.OnEnemiesChanged -= RefreshUI;
-    }
-
-    private void RefreshUI()
-    {
-        if (_service == null || _statsText == null)
-            return;
-
         var enemies = _service.Enemies;
 
         if (enemies.Count == 0)
@@ -40,7 +28,7 @@ public class EnemyStatsView : MonoBehaviour
 
             return;
         }
-            
+
         var stats = enemies
             .SelectMany(e => e.DeathConditions)
             .GroupBy(pair => pair.Reason)
@@ -54,5 +42,11 @@ public class EnemyStatsView : MonoBehaviour
             sb.AppendLine($"- {line}");
 
         _statsText.text = sb.ToString();
+    }
+
+    private void OnDestroy()
+    {
+        if (_service != null)
+            _service.OnEnemiesChanged -= UpdateUI;
     }
 }

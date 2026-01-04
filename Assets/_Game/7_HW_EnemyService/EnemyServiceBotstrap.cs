@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class EnemyServiceBotstrap : MonoBehaviour
 {
-    [SerializeField] private EnemyStatsView _enemyStatsView;
+    [SerializeField] private EnemiesStatsView _enemiesStatsView;
 
     [SerializeField] private EnemyCreationHandler _enemyCreationHandler;
 
-    [SerializeField] private float _timerDuration = 10f;
+    [SerializeField, Space(15)] private float _timerDuration = 10f;
     [SerializeField] private int _maxEnemyCount = 5;
 
     private EnemyService _enemyService;
@@ -18,13 +18,13 @@ public class EnemyServiceBotstrap : MonoBehaviour
 
         _example = new Example(_enemyService, _enemyCreationHandler, _timerDuration, _maxEnemyCount);
 
-        _enemyStatsView.Initialize(_enemyService);
+        _enemiesStatsView.Initialize(_enemyService);
     }
 
     private void Update()
     {
         if (_enemyService != null)
-            _enemyService.Update();
+            _enemyService.CustomUpdate();
     }
 
     private void OnDestroy()

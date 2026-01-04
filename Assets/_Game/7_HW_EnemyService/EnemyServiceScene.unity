@@ -896,7 +896,7 @@ GameObject:
   - component: {fileID: 893099853}
   - component: {fileID: 893099854}
   m_Layer: 5
-  m_Name: EnemyStatsView
+  m_Name: EnemiesStatsView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1663,7 +1663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd510e67bfed8ab4ab8a438db6d87cbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enemyStatsView: {fileID: 893099854}
+  _enemiesStatsView: {fileID: 893099854}
   _enemyCreationHandler: {fileID: 1547561621}
   _timerDuration: 10
   _maxEnemyCount: 5

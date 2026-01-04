@@ -10,15 +10,12 @@ public class EnemyService
     private List<Enemy> _enemies = new List<Enemy>();
     private MonoBehaviour _coroutineRunner;
 
-    public EnemyService(MonoBehaviour coroutineRunner)
-    {
-        _coroutineRunner = coroutineRunner;
-    }
+    public EnemyService(MonoBehaviour coroutineRunner) => _coroutineRunner = coroutineRunner;
 
     public IReadOnlyList<Enemy> Enemies => _enemies;
     public int EnemiesCount => _enemies.Count;
 
-    public void RegisterEnemy(List<DeathConditionPair> conditions)
+    public void RegisterEnemy(List<DeathCondition> conditions)
     {
         Enemy newEnemy = new Enemy(conditions, _coroutineRunner);
         _enemies.Add(newEnemy);
@@ -26,7 +23,7 @@ public class EnemyService
         OnEnemiesChanged?.Invoke();
     }
 
-    public void Update()
+    public void CustomUpdate()
     {
         int removedCount = _enemies.RemoveAll(enemy =>
         {
@@ -38,6 +35,7 @@ public class EnemyService
 
                 return true;
             }
+
             return false;
         });
 

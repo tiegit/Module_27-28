@@ -10,7 +10,7 @@ public class Example : IDisposable
 
     private EnemyCreationHandler _enemyCreationHandler;
 
-    private List<DeathConditionPair> _selectedDeathPairs = new List<DeathConditionPair>();
+    private List<DeathCondition> _selectedDeathPairs = new List<DeathCondition>();
 
     public Example(EnemyService service, EnemyCreationHandler enemyCreationHandler, float timerDuration, int maxEnemyCount)
     {
@@ -26,7 +26,7 @@ public class Example : IDisposable
 
     private void OnAddReasonButtonClicked(DeathReason reason)
     {
-        if (_selectedDeathPairs.Exists(p => p.Reason == reason))
+        if (_selectedDeathPairs.Exists(sdp => sdp.Reason == reason))
             return;
 
         Func<Enemy, bool> conditionLogic = reason switch
@@ -38,7 +38,7 @@ public class Example : IDisposable
         };
 
         if (conditionLogic != null)
-            _selectedDeathPairs.Add(new DeathConditionPair(reason, conditionLogic));
+            _selectedDeathPairs.Add(new DeathCondition(reason, conditionLogic));
         else
             Debug.LogWarning($"Логика для {reason} не реализована!");
     }
@@ -47,7 +47,7 @@ public class Example : IDisposable
     {
         if (_selectedDeathPairs.Count > 0)
         {
-            _service.RegisterEnemy(new List<DeathConditionPair>(_selectedDeathPairs));
+            _service.RegisterEnemy(new List<DeathCondition>(_selectedDeathPairs));
 
             Debug.Log($"Враг создан с условиями: {string.Join(", ", _selectedDeathPairs.ConvertAll(p => p.Reason))}");
 
