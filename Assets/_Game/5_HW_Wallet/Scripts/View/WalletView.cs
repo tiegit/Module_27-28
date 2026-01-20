@@ -5,15 +5,16 @@ public class WalletView : MonoBehaviour
 {
     [SerializeField] private RectTransform _walletViewInner;
     [SerializeField] private WalletItemView _walletItemPrefab;
-    [SerializeField] private List<WalletItemViewDTO> _walletItems;
+    [SerializeField] private List<WalletItem> _walletItems;
 
-    private IWalletDataChangeSender _wallet;
+    private IWallet _wallet;
     private Dictionary<WalletItemType, WalletItemView> _itemsViews = new Dictionary<WalletItemType, WalletItemView>();
 
-    public void Initialize(IWalletDataChangeSender wallet)
+    public void Initialize(IWallet wallet)
     {
         _wallet = wallet;
         _wallet.WalletDataChanged += OnWalletDataChanged;
+        _wallet.WalletCleared += OnWalletCleared;
 
         foreach (Transform child in _walletViewInner)
             Destroy(child.gameObject);
@@ -21,53 +22,57 @@ public class WalletView : MonoBehaviour
         _itemsViews.Clear();
     }
 
-    private void OnWalletDataChanged()
+    private void OnWalletDataChanged(WalletItemType walletItemType, int amount)
     {
-        List<Currency> activeCurrencies = _wallet.GetCurrencyBy(currency => currency.Amount > 0);
-
-        List<WalletItemType> keysToRemove = new List<WalletItemType>();
-
-        foreach (var type in _itemsViews.Keys)
+        if (amount <= 0)
         {
-            bool isActive = activeCurrencies.Exists(currency => type == currency.ItemType);
+            Destroy(_itemsViews[walletItemType].gameObject);
+            _itemsViews.Remove(walletItemType);
 
-            if (!isActive)
-                keysToRemove.Add(type);
+            return;
         }
+
+        if (_itemsViews.ContainsKey(walletItemType))
+        {
+            _itemsViews[walletItemType].SetValue(amount);
+        }
+        else
+        {
+            foreach (var item in _walletItems)
+            {
+                if (item.ItemType == walletItemType)
+                {
+                    WalletItemView itemView = Instantiate(_walletItemPrefab, _walletViewInner);
+                    itemView.Setup(item.Sprite, amount);
+
+                    _itemsViews[walletItemType] = itemView;
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private void OnWalletCleared()
+    {
+        var keysToRemove = new List<WalletItemType>(_itemsViews.Keys);
 
         foreach (var key in keysToRemove)
         {
-            Destroy(_itemsViews[key].gameObject);
+            var itemView = _itemsViews[key];
+
+            Destroy(itemView.gameObject);
+
             _itemsViews.Remove(key);
-        }
-
-        foreach (var data in activeCurrencies)
-        {
-            if (_itemsViews.ContainsKey(data.ItemType))
-            {
-                _itemsViews[data.ItemType].SetValue(data.Amount);
-            }
-            else
-            {
-                foreach (var item in _walletItems)
-                {
-                    if (item.ItemType == data.ItemType)
-                    {
-                        WalletItemView itemView = Instantiate(_walletItemPrefab, _walletViewInner);
-                        itemView.Setup(item.Sprite, data.Amount);
-
-                        _itemsViews[data.ItemType] = itemView;
-
-                        break;
-                    }
-                }
-            }
         }
     }
 
     private void OnDestroy()
     {
         if (_wallet != null)
+        {
             _wallet.WalletDataChanged -= OnWalletDataChanged;
+            _wallet.WalletCleared -= OnWalletCleared;
+        }
     }
 }

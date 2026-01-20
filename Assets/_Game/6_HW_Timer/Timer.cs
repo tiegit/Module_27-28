@@ -76,7 +76,7 @@ public class Timer
     {
         while (_elapsedTime < _initialTime)
         {
-            if (!_isPaused)
+            if (_isPaused == false)
                 UpdateTimeLeft(_elapsedTime + Time.deltaTime);
 
             yield return null;

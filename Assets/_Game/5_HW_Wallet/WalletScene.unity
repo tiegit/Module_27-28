@@ -1334,7 +1334,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _walletView: {fileID: 688333383}
-  _inputButtonsHandler: {fileID: 315103565}
+  _inputButtons: {fileID: 315103565}
 --- !u!4 &1653270624
 Transform:
   m_ObjectHideFlags: 0

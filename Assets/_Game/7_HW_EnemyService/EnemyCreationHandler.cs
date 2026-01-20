@@ -4,7 +4,9 @@ using UnityEngine.UI;
 
 public class EnemyCreationHandler : MonoBehaviour
 {
-    public event Action<DeathReason> AddReasonButtonClicked;
+    public event Action AddLogicalDeathReasonClicked;
+    public event Action AddTimeExpiredReasonClicked;
+    public event Action AddCountExceededReasonClicked;
     public event Action CreateButtonClicked;
 
     [SerializeField] private Button _logicalReasonButton;
@@ -31,9 +33,9 @@ public class EnemyCreationHandler : MonoBehaviour
         _createEnemyButton.onClick.RemoveListener(CreateEnemyButtonClicked);
     }
 
-    private void AddLogicalDeathReason() => AddReasonButtonClicked?.Invoke(DeathReason.LogicalDeath);
-    private void AddTimeExpiredReason() => AddReasonButtonClicked?.Invoke(DeathReason.TimeExpired);
-    private void AddCountExceededReason() => AddReasonButtonClicked?.Invoke(DeathReason.CountExceeded);
+    private void AddLogicalDeathReason() => AddLogicalDeathReasonClicked?.Invoke();
+    private void AddTimeExpiredReason() => AddTimeExpiredReasonClicked?.Invoke();
+    private void AddCountExceededReason() => AddCountExceededReasonClicked?.Invoke();
 
     private void CreateEnemyButtonClicked() => CreateButtonClicked?.Invoke();
 }

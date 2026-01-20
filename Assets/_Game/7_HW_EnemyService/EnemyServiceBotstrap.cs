@@ -14,9 +14,9 @@ public class EnemyServiceBotstrap : MonoBehaviour
 
     private void Awake()
     {
-        _enemyService = new EnemyService(this);
+        _enemyService = new EnemyService();
 
-        _example = new Example(_enemyService, _enemyCreationHandler, _timerDuration, _maxEnemyCount);
+        _example = new Example(_enemyService, _enemyCreationHandler, _timerDuration, _maxEnemyCount, this);
 
         _enemiesStatsView.Initialize(_enemyService);
     }

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class WalletItemViewDTO
+public class WalletItem
 {
     public WalletItemType ItemType;
     public Sprite Sprite;

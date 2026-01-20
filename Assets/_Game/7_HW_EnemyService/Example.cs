@@ -1,69 +1,89 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Example : IDisposable
 {
     private EnemyService _service;
+    private EnemyCreationHandler _enemyCreationHandler;
     private float _timerDuration;
     private int _maxEnemyCount;
 
-    private EnemyCreationHandler _enemyCreationHandler;
-
-    private List<DeathCondition> _selectedDeathPairs = new List<DeathCondition>();
-
-    public Example(EnemyService service, EnemyCreationHandler enemyCreationHandler, float timerDuration, int maxEnemyCount)
+    private List<(Func<Enemy, bool> condition, string name)> _selectedConditions = new();
+    public Example(EnemyService service, EnemyCreationHandler enemyCreationHandler, float timerDuration, int maxEnemyCount, MonoBehaviour coroutineRunner)
     {
         _service = service;
 
         _enemyCreationHandler = enemyCreationHandler;
-        _enemyCreationHandler.AddReasonButtonClicked += OnAddReasonButtonClicked;
+        _enemyCreationHandler.AddLogicalDeathReasonClicked += OnAddLogicalDeathReasonClicked;
+        _enemyCreationHandler.AddTimeExpiredReasonClicked += OnAddTimeExpiredReasonClicked;
+        _enemyCreationHandler.AddCountExceededReasonClicked += OnAddCountExceededReasonClicked;
         _enemyCreationHandler.CreateButtonClicked += OnCreateEnemyButtonClicked;
 
         _timerDuration = timerDuration;
         _maxEnemyCount = maxEnemyCount;
+
+        coroutineRunner.StartCoroutine(LogicalDeathActivationCoroutine());
     }
 
-    private void OnAddReasonButtonClicked(DeathReason reason)
+    private void OnAddLogicalDeathReasonClicked() => AddReason((enemy => enemy.IsDead, "Логическое уничтожение"));
+
+    private void OnAddTimeExpiredReasonClicked()
     {
-        if (_selectedDeathPairs.Exists(sdp => sdp.Reason == reason))
-            return;
+        float spawnTime = Time.time;
 
-        Func<Enemy, bool> conditionLogic = reason switch
+        AddReason((enemy => Time.time - spawnTime > _timerDuration, $"Время жизни ({_timerDuration}s)"));
+    }
+
+    private void OnAddCountExceededReasonClicked() => AddReason((enemy => _service.EnemiesCount > _maxEnemyCount, $"Превышен лимит ({_maxEnemyCount} врагов)"));
+
+    private void AddReason((Func<Enemy, bool> condition, string name) reason)
+    {
+        if (_selectedConditions.Any(c => c.condition == reason.condition && c.name == reason.name))
         {
-            DeathReason.LogicalDeath => enemy => enemy.IsDead,
-            DeathReason.TimeExpired => enemy => (Time.time - enemy.SpawnTime) > _timerDuration,
-            DeathReason.CountExceeded => _ => _service.EnemiesCount > _maxEnemyCount,
-            _ => null
-        };
+            Debug.Log($"Условие уже добавлено: {reason.name}");
 
-        if (conditionLogic != null)
-            _selectedDeathPairs.Add(new DeathCondition(reason, conditionLogic));
-        else
-            Debug.LogWarning($"Логика для {reason} не реализована!");
+            return;
+        }
+
+        _selectedConditions.Add(reason);
+
+        Debug.Log($"Добавлено условие: {reason.name}");
     }
 
     private void OnCreateEnemyButtonClicked()
     {
-        if (_selectedDeathPairs.Count > 0)
+        if (_selectedConditions.Count == 0)
         {
-            _service.RegisterEnemy(new List<DeathCondition>(_selectedDeathPairs));
-
-            Debug.Log($"Враг создан с условиями: {string.Join(", ", _selectedDeathPairs.ConvertAll(p => p.Reason))}");
-
-            _selectedDeathPairs.Clear();
+            Debug.LogWarning("Нет условий смерти — враг не создан.");
+            return;
         }
-        else
-        {
-            Debug.LogWarning("Нельзя создать врага без условий смерти!");
-        }
+
+        var enemy = new Enemy();
+
+        _service.RegisterEnemy(enemy, _selectedConditions);
+
+        Debug.Log($"Враг создан с условиями: {string.Join(", ", _selectedConditions.Select(c => c.name))}");
+
+        _selectedConditions.Clear();
+    }
+
+    private IEnumerator LogicalDeathActivationCoroutine()
+    {
+        yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) == true);
+
+        _service.ActivateLogicalDeath(enemy => enemy.IsDead);
     }
 
     public void Dispose()
     {
         if (_enemyCreationHandler != null)
         {
-            _enemyCreationHandler.AddReasonButtonClicked -= OnAddReasonButtonClicked;
+            _enemyCreationHandler.AddLogicalDeathReasonClicked -= OnAddLogicalDeathReasonClicked;
+            _enemyCreationHandler.AddTimeExpiredReasonClicked -= OnAddTimeExpiredReasonClicked;
+            _enemyCreationHandler.AddCountExceededReasonClicked -= OnAddCountExceededReasonClicked;
             _enemyCreationHandler.CreateButtonClicked -= OnCreateEnemyButtonClicked;
         }
     }

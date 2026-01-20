@@ -13,40 +13,37 @@ public class EnemiesStatsView : MonoBehaviour
     {
         _service = service;
 
-        _service.OnEnemiesChanged += UpdateUI;
+        _service.EnemiesCountChanged += UpdateUI;
 
         UpdateUI();
     }
 
     private void UpdateUI()
     {
-        var enemies = _service.Enemies;
+        var stats = _service.GetStatistics();
+        int aliveCount = stats.aliveCount;
+        var deathStats = stats.deathStats;
 
-        if (enemies.Count == 0)
+        if (aliveCount == 0)
         {
             _statsText.text = "Врагов нет";
-
             return;
         }
 
-        var stats = enemies
-            .SelectMany(e => e.DeathConditions)
-            .GroupBy(pair => pair.Reason)
-            .Select(group => $"{group.Key}: {group.Count()}");
-
         StringBuilder sb = new StringBuilder();
-        sb.AppendLine($"<b>Всего врагов: {enemies.Count}</b>");
-        sb.AppendLine("<size=80%>Распределение условий:</size>");
+        sb.AppendLine($"<b>Всего врагов: {aliveCount}</b>");
+        sb.AppendLine("<size=80%>Причины смерти:</size>");
 
-        foreach (var line in stats)
-            sb.AppendLine($"- {line}");
+        foreach (var kvp in deathStats.OrderByDescending(x => x.Value))
+            sb.AppendLine($"- {kvp.Key}: {kvp.Value}");
 
         _statsText.text = sb.ToString();
     }
 
+
     private void OnDestroy()
     {
         if (_service != null)
-            _service.OnEnemiesChanged -= UpdateUI;
+            _service.EnemiesCountChanged -= UpdateUI;
     }
 }

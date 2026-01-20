@@ -5,44 +5,90 @@ using UnityEngine;
 
 public class EnemyService
 {
-    public event Action OnEnemiesChanged;
+    public event Action EnemiesCountChanged;
 
-    private List<Enemy> _enemies = new List<Enemy>();
-    private MonoBehaviour _coroutineRunner;
-
-    public EnemyService(MonoBehaviour coroutineRunner) => _coroutineRunner = coroutineRunner;
-
-    public IReadOnlyList<Enemy> Enemies => _enemies;
-    public int EnemiesCount => _enemies.Count;
-
-    public void RegisterEnemy(List<DeathCondition> conditions)
-    {
-        Enemy newEnemy = new Enemy(conditions, _coroutineRunner);
-        _enemies.Add(newEnemy);
-
-        OnEnemiesChanged?.Invoke();
-    }
+    private readonly Dictionary<Enemy, List<(Func<Enemy, bool> condition, string name)>> _enemyConditions = new();
+    public IReadOnlyList<Enemy> Enemies => _enemyConditions.Keys.ToList();
+    public int EnemiesCount => _enemyConditions.Count;
 
     public void CustomUpdate()
     {
-        int removedCount = _enemies.RemoveAll(enemy =>
-        {
-            var reasons = enemy.GetActiveDeathReasons().ToList();
+        var enemiesToKill = new List<Enemy>();
 
-            if (reasons.Count > 0)
+        foreach (var kvp in _enemyConditions)
+        {
+            var enemy = kvp.Key;
+            var conditions = kvp.Value;
+
+            var triggered = conditions
+                .Where(c => c.condition(enemy))
+                .ToList();
+
+            if (triggered.Count > 0)
             {
-                Debug.Log($"Враг уничтожен: {string.Join(", ", reasons)}");
+                string reason = string.Join(", ", triggered.Select(c => c.name));
 
-                return true;
+                Debug.Log($"Враг уничтожен по условиям: {reason}");
+
+                enemiesToKill.Add(enemy);
             }
+        }
 
-            return false;
-        });
-
-        if (removedCount > 0)
+        foreach (var enemy in enemiesToKill)
         {
-            Debug.Log($"Зарегистрировано врагов: {_enemies.Count}");
-            OnEnemiesChanged?.Invoke();
+            enemy.Kill();
+            _enemyConditions.Remove(enemy);
+            EnemiesCountChanged?.Invoke();
+        }
+    }
+
+    public void RegisterEnemy(Enemy enemy, List<(Func<Enemy, bool> condition, string name)> conditions)
+    {
+        if (enemy == null)
+            throw new ArgumentNullException(nameof(enemy));
+
+        if (conditions == null || conditions.Count == 0)
+            throw new ArgumentException("Условия смерти не могут быть null или пустыми.");
+
+        _enemyConditions[enemy] = new List<(Func<Enemy, bool>, string)>(conditions);
+
+        EnemiesCountChanged?.Invoke();
+    }
+
+    public (int aliveCount, Dictionary<string, int> deathStats) GetStatistics()
+    {
+        int aliveCount = _enemyConditions.Count;
+
+        var deathStats = new Dictionary<string, int>();
+
+        foreach (var conditions in _enemyConditions.Values)
+        {
+            foreach (var condition in conditions)
+            {
+                if (deathStats.ContainsKey(condition.name))
+                    deathStats[condition.name]++;
+                else
+                    deathStats[condition.name] = 1;
+            }
+        }
+
+        return (aliveCount, deathStats);
+    }
+
+
+    public void ActivateLogicalDeath(Func<Enemy, bool> conditionToFind)
+    {
+        var enemyEntry = _enemyConditions.FirstOrDefault(pair =>
+            pair.Value.Any(c => c.condition == conditionToFind));
+
+        if (enemyEntry.Key != null)
+        {
+            Debug.Log($"EnemyService: Логическая смерть активирована для {enemyEntry.Key}");
+            enemyEntry.Key.Kill();
+        }
+        else
+        {
+            Debug.LogWarning("Враг с логическим условием смерти не найден.");
         }
     }
 }

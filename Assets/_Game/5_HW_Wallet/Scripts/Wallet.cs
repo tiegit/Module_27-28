@@ -2,21 +2,75 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Wallet : IWalletDataChangeSender, IDisposable
+public class Wallet : IWallet
 {
-    public event Action WalletDataChanged;
+    public event Action<WalletItemType, int> WalletDataChanged;
+    public event Action WalletCleared;
 
     private List<Currency> _currencies = new List<Currency>();
-    private IInputHandler _inputHandler;
 
-    public Wallet(IInputHandler inputHandler)
+    public void AddCurrency(WalletItemType walletItemType, int value)
     {
-        _inputHandler = inputHandler;
+        if (value <= 0)
+            return;
 
-        _inputHandler.AddCurrency += OnAddCurrency;
-        _inputHandler.RemoveCurrency += OnRemoveCurrency;
-        _inputHandler.Clear += OnClear;
+        var currencies = GetCurrencyBy(c => c.ItemType == walletItemType);
+
+        if (currencies.Count > 0)
+        {
+            currencies[0].AddAmount(value);
+            InvokeWalletAction(walletItemType, currencies[0].Amount);
+        }
+        else
+        {
+            _currencies.Add(new Currency(walletItemType, value));
+            InvokeWalletAction(walletItemType, value);
+        }
     }
+
+    public bool CanRemoveCurrency(WalletItemType walletItemType, int value)
+    {
+        if (value <= 0)
+            return false;
+
+        var currencies = GetCurrencyBy(c => c.ItemType == walletItemType);
+
+        if (currencies.Count == 0)
+            return false;
+
+        Currency currency = currencies[0];
+        return currency.Amount >= value;
+    }
+
+    public void RemoveCurrency(WalletItemType walletItemType, int value)
+    {
+        if (value <= 0)
+            return;
+
+        var currencies = GetCurrencyBy(c => c.ItemType == walletItemType);
+
+        if (currencies.Count > 0)
+        {
+            Currency currency = currencies[0];
+
+            currency.RemoveAmount(value);
+
+            InvokeWalletAction(walletItemType, currency.Amount);
+
+            if (currency.Amount <= 0)
+                _currencies.Remove(currency);
+        }
+    }
+
+    public void Clear()
+    {
+        _currencies.Clear();
+
+        WalletCleared?.Invoke();
+
+        Debug.Log($"Кошелек очищен");
+    }
+
     public List<Currency> GetCurrencyBy(Func<Currency, bool> itemFilter)
     {
         List<Currency> selectedCurrency = new List<Currency>();
@@ -30,67 +84,10 @@ public class Wallet : IWalletDataChangeSender, IDisposable
         return selectedCurrency;
     }
 
-    private void OnAddCurrency(WalletItemType walletItemType, int value)
+    private void InvokeWalletAction(WalletItemType walletItemType, int amount)
     {
-        if (value <= 0)
-            return;
+        WalletDataChanged?.Invoke(walletItemType, amount);
 
-        var currencies = GetCurrencyBy(c => c.ItemType == walletItemType);
-
-        if (currencies.Count > 0)
-            currencies[0].AddAmount(value);
-        else
-            _currencies.Add(new Currency(walletItemType, value));
-
-        InvokeWalletAction(walletItemType);
-    }
-
-    private void OnRemoveCurrency(WalletItemType walletItemType, int value)
-    {
-        if (value <= 0)
-            return;
-
-        var currencies = GetCurrencyBy(currency => currency.ItemType == walletItemType);
-
-        if (currencies.Count > 0)
-        {
-            Currency currency = currencies[0];
-            currency.RemoveAmount(value);
-
-            if (currency.Amount <= 0)
-                currency.Clear();
-
-            InvokeWalletAction(walletItemType);
-        }
-    }
-
-    private void OnClear()
-    {
-        _currencies.Clear();
-
-        WalletDataChanged?.Invoke();
-
-        Debug.Log($"Кошелек очищен");
-    }
-
-    private void InvokeWalletAction(WalletItemType walletItemType)
-    {
-        WalletDataChanged?.Invoke();
-
-        int currentAmount = 0;
-
-        var currencies = GetCurrencyBy(currency => currency.ItemType == walletItemType);
-
-        if (currencies.Count > 0)
-            currentAmount = currencies[0].Amount;
-
-        Debug.Log($"Изменилось количество - {walletItemType} : {currentAmount}");
-    }
-
-    public void Dispose()
-    {
-        _inputHandler.AddCurrency -= OnAddCurrency;
-        _inputHandler.RemoveCurrency -= OnRemoveCurrency;
-        _inputHandler.Clear -= OnClear;
+        Debug.Log($"Изменилось количество - {walletItemType} : {amount}");
     }
 }

@@ -3,20 +3,18 @@ using UnityEngine;
 public class WalletBootstrap : MonoBehaviour
 {
     [SerializeField] private WalletView _walletView;
-    [SerializeField] private InputButtonsHandler _inputButtonsHandler;
+    [SerializeField] private InputButtons _inputButtons;
 
     private Wallet _wallet;
-    private InputHandler _inputHandler;
-    private CombinedInputHandler _combinedInputHandler;
+    private Player _player;
 
     private void Awake()
     {
         PlayerInput playerInput = new PlayerInput();
-        _inputHandler = new InputHandler(playerInput);
 
-        _combinedInputHandler = new CombinedInputHandler(_inputHandler, _inputButtonsHandler);
+        _wallet = new Wallet();
 
-        _wallet = new Wallet(_combinedInputHandler);
+        _player = new Player(playerInput, _inputButtons, _wallet);
 
         if (_walletView != null)
             _walletView.Initialize(_wallet);
@@ -24,12 +22,11 @@ public class WalletBootstrap : MonoBehaviour
 
     private void Update()
     {
-        _inputHandler.CustomUpdate();
+        _player.CustomUpdate();
     }
 
     private void OnDestroy()
     {
-        _wallet.Dispose();
-        _combinedInputHandler.Dispose();
+        _player.Dispose();
     }
 }
